@@ -1,26 +1,37 @@
-from typing import Union
-
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-from pydantic import BaseModel
+from app.core.config import settings
 
-class Item(BaseModel):
-    name: str
-    price: float
-    is_offer: Union[bool, None] = None
+# from app.core.logging import configure_logging
+from app.api.v1.api import router as api_v1_router
 
-
-app = FastAPI()
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+# configure_loggin()
 
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+def create_app() -> FastAPI:
+    app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
 
-@app.put("/items/{item_id}")
-def update_item(item_id: int, item: Item):
-    return { "item_name": item.name, "item_id": item.id }
+    # CORS (adjust origins in production):
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    app.include_router(api_v1_router, prefix="/api/v1")
+
+    @app.get("/")
+    async def root():
+        return {"message": "Hello World"}
+
+    @app.get("/health/liveness")
+    async def liveness():
+        return {"status": "ok"}
+
+    return app
+
+
+app = create_app()
