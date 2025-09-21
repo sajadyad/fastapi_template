@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
-from .service import ItemsService
-from .schema import ItemCreate, ItemOut, ItemUpdate
+from ..service.item import ItemsService
+from ..schema.item import ItemCreate, ItemOut, ItemUpdate
 from app.api.deps import get_items_service
 
 router = APIRouter()

@@ -1,8 +1,8 @@
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from .schema import ItemCreate, ItemUpdate
-from .entity import Item
+from ..schema.item import ItemCreate, ItemUpdate
+from ..entities.item import Item
 
 
 class ItemsRepository:

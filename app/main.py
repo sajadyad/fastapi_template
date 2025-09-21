@@ -4,9 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.logging import configure_logging
 from app.api.v1.api import router as api_v1_router
-from .modules.error.handlers import register_error_handlers
-from .modules.error.middleware import catch_all_exceptions_middleware
-from .modules.error.exceptions import DomainException, UniqueConstraintException
+from .error.handlers import register_error_handlers
+from .error.middleware import catch_all_exceptions_middleware
+from .error.exceptions import DomainException, UniqueConstraintException
 
 
 configure_logging()

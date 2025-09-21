@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .repo import ItemsRepository, ItemCreate, ItemUpdate
+from ..repo.item import ItemsRepository, ItemCreate, ItemUpdate
 
 
 class ItemsService:

@@ -1,7 +1,7 @@
 from typing import AsyncGenerator
 from fastapi import Depends
 from app.db.session import get_db
-from app.modules.item.service import ItemsService
+from app.service.item import ItemsService
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
