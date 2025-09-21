@@ -1,12 +1,11 @@
-from fastapi import FastAPI
+from http import HTTPStatus
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.logging import configure_logging
 from app.api.v1.api import router as api_v1_router
-from .error.handlers import register_error_handlers
-from .error.middleware import catch_all_exceptions_middleware
-from .error.exceptions import DomainException, UniqueConstraintException
+from .utils.error import register_error_handlers
 
 
 configure_logging()
@@ -16,8 +15,6 @@ def create_app() -> FastAPI:
     app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
 
     register_error_handlers(app)
-
-    app.middleware("http")(catch_all_exceptions_middleware)
 
     app.add_middleware(
         CORSMiddleware,
@@ -29,25 +26,13 @@ def create_app() -> FastAPI:
 
     app.include_router(api_v1_router, prefix="/api/v1")
 
-    @app.get("/")
-    async def root():
-        return {"message": "Hello World"}
-
-    @app.get("/health/liveness")
-    async def liveness():
-        return {"status": "ok"}
+    @app.get("/ping")
+    async def ping():
+        return "pong"
 
     @app.get("/error")
     async def error():
-        raise Exception()
-
-    @app.get("/error/domain")
-    async def error_domain():
-        raise DomainException()
-
-    @app.get("/error/domain/unique-constraint")
-    async def domain_error():
-        raise UniqueConstraintException()
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
     return app
 
