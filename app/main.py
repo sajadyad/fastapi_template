@@ -1,13 +1,12 @@
 from http import HTTPStatus
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_pagination import add_pagination
 
 from app.api.v1.api import router as api_v1_router
 from app.core.config import settings
 from app.core.logging import configure_logging
-from app.core.security import authenticate_user
 
 from .utils.error import register_error_handlers
 
@@ -37,10 +36,6 @@ def create_app() -> FastAPI:
     @app.get("/error")
     async def error():
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
-
-    @app.get("/secure-data/")
-    def read_secure_data(username: str = Depends(authenticate_user)):
-        return {"message": f"Hello, {username}. You have access to secure data."}
 
     return app
 
