@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db.base import Base
-from .associations import user_role  # ✅ ایمپورت جدول ارتباطی
+from .associations import user_role  
 
 class User(Base):
     __tablename__ = "users"
@@ -20,3 +20,5 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     roles = relationship("Role", secondary=user_role, back_populates="users")
+    owned_products = relationship("Product", back_populates="owner")  
+    orders = relationship("Order", back_populates="user") 

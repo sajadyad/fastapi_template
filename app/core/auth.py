@@ -1,24 +1,31 @@
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Path
 from fastapi.security import OAuth2PasswordBearer
-from passlib.context import CryptContext
 from jose import JWTError, jwt
 
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+
+from app.core.security import verify_password
+from app.db.session import get_db
+from app.entities.user import User
+from app.entities.product import Product
+from app.entities.order import Order, OrderItem
 from app.core.config import settings
-
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=True)
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+async def authenticate_user(
+    db: AsyncSession, username: str, password: str
+) -> User | None:
+    result = await db.execute(select(User).where(User.username == username))
+    user = result.scalar_one_or_none()
+    if not user or not verify_password(password, user.password_hash):
+        return None
+    return user
 
 
 # TODO: use JWTClaims instead of dict
@@ -26,16 +33,22 @@ def create_access_token(claims: dict, expires_delta: Optional[timedelta] = None)
     claims_to_encode = claims.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
+        claims_to_encode.update({"exp": expire})
     else:
-        expire = datetime.utcnow() + timedelta(settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    claims_to_encode.update({"exp": expire})
+        expire = datetime.utcnow() + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+        claims_to_encode.update({"exp": expire})
+
     encoded_jwt = jwt.encode(
         claims_to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
     )
     return encoded_jwt
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
+async def get_current_user(
+    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
+) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -51,13 +64,33 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise credentials_exception
 
-    # TODO:
-    # In a real app, you'd fetch the user from DB here
-    # For demo, we just return the username
-    return {"username": username}
+    stmt = (
+        select(User).where(User.username == username).options(selectinload(User.roles))
+    )
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        raise credentials_exception
+
+    return user
 
 
-# Optional: You can create a dependency that returns the actual user object
-# async def get_current_active_user(current_user: dict = Depends(get_current_user)):
-#     # Add logic to check if user is active, etc.
-#     return current_user
+async def get_current_product(
+    product_id: int = Path(...), db: AsyncSession = Depends(get_db)
+) -> Product:
+    product = await db.get(Product, product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
+
+
+async def get_purchased_product_ids(db: AsyncSession, user_id: int) -> set[int]:
+    stmt = (
+        select(OrderItem.product_id)
+        .join(Order)
+        .where(Order.user_id == user_id)
+        .where(Order.status == "paid")
+    )
+    result = await db.scalars(stmt)
+    return set(result.all())

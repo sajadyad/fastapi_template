@@ -14,6 +14,8 @@ from .utils.error import register_error_handlers
 from app.db.session import engine
 from app.db.base import Base
 
+import app.entities  # ✅ این خط مطمئن می‌کنه همه مدل‌ها load شدن
+
 configure_logging()
 
 #@asynccontextmanager
@@ -50,6 +52,5 @@ def create_app() -> FastAPI:
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
     return app
-
 
 app = create_app()

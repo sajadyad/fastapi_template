@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     # default to a local sqlite async DB to make local dev easier
     DATABASE_URL: str = "sqlite+aiosqlite:///./app.db"
-    SECRET_KEY: str = "change-me-in-dev"
+    SECRET_KEY: str = "Change-me-in-dev"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
     ALGORITHM: str = "HS256"
     CORS_ORIGINS: List[str] = ["*"]

@@ -9,18 +9,16 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data # Add volume for data persistence
+      - postgres_data:/var/lib/postgresql/data
 
   web:
     build: .
     depends_on:
       - db
-    environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:password@db:5432/online_shop_db
-      SECRET_KEY: change-me-in-prod
+    env_file:
+      - .env
     ports:
-      - "8000:8000" # Fixed port mapping
-# Optional: for development with hot reload
+      - "8000:8000"
 
 volumes:
   postgres_data:
